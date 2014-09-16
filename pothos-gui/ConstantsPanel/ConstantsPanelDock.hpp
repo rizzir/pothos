@@ -4,6 +4,8 @@
 #pragma once
 #include <Pothos/Config.hpp>
 #include <QDockWidget>
+#include <vector>
+#include <utility> //pair
 
 class QTableWidget;
 class QToolButton;
@@ -15,8 +17,12 @@ class ConstantsPanelDock : public QDockWidget
 public:
     ConstantsPanelDock(QWidget *parent);
 
+    void reload(const std::vector<std::pair<QString, QString>> &constants);
+
+private slots:
+    void handleAdd(void);
+
 private:
     QTableWidget *_table;
     QToolButton *_addButton;
-    QLineEdit *_lineEdit;
 };

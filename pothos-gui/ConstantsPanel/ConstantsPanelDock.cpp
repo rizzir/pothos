@@ -10,8 +10,7 @@
 ConstantsPanelDock::ConstantsPanelDock(QWidget *parent):
     QDockWidget(parent),
     _table(nullptr),
-    _addButton(nullptr),
-    _lineEdit(nullptr)
+    _addButton(nullptr)
 {
     this->setObjectName("ConstantsPanelDock");
     this->setWindowTitle(tr("Constants Panel"));
@@ -24,15 +23,25 @@ ConstantsPanelDock::ConstantsPanelDock(QWidget *parent):
     _table->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Name")));
     _table->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Value")));
 
-    //create buttons
+    //create entry widgets
     _addButton = makeToolButton(this->widget(), "list-add");
-    _lineEdit = new QLineEdit(this->widget());
-    _lineEdit->setPlaceholderText(tr("Click to enter a new Constant"));
+    connect(_addButton, SIGNAL(clicked(void)), this, SLOT(handleAdd(void)));
 
     //create the data entry row
     _table->setRowCount(1);
     _table->setCellWidget(0, 0, _addButton);
-    _table->setCellWidget(0, 1, _lineEdit);
+    _table->setSpan(0, 0, 1, 2);
 
     _table->resizeColumnsToContents();
+}
+
+void ConstantsPanelDock::reload(const std::vector<std::pair<QString, QString>> &constants)
+{
+    
+    _table->resizeColumnsToContents();
+}
+
+void ConstantsPanelDock::handleAdd(void)
+{
+    
 }
