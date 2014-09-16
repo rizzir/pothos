@@ -5,6 +5,7 @@
 #include <Pothos/System.hpp>
 #include <Poco/Path.h>
 #include <Poco/SingletonHolder.h>
+#include <QToolButton>
 
 QMap<QString, QAction *> &getActionMap(void)
 {
@@ -57,4 +58,14 @@ QString makeIconPath(const QString &name)
 QIcon makeIconFromTheme(const QString &name)
 {
     return QIcon::fromTheme(name, QIcon(makeIconPath(name+".png")));
+}
+
+QToolButton *makeToolButton(QWidget *parent, const QString &theme)
+{
+    auto tb = new QToolButton(parent);
+    tb->setCursor(Qt::PointingHandCursor);
+    tb->setFocusPolicy(Qt::NoFocus);
+    tb->setIcon(makeIconFromTheme(theme));
+    tb->setStyleSheet("background: transparent; border: none;");
+    return tb;
 }

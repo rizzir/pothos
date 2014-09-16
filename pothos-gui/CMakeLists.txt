@@ -88,6 +88,8 @@ set(SOURCES
     PropertiesPanel/BlockPropertyEditWidget.cpp
     PropertiesPanel/BreakerPropertiesPanel.cpp
 
+    ConstantsPanel/ConstantsPanelDock.cpp
+
     MessageWindow/MessageWindowDock.cpp
     MessageWindow/LoggerDisplay.cpp
     MessageWindow/LoggerChannel.cpp

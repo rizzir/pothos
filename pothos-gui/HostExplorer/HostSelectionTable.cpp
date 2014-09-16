@@ -146,19 +146,6 @@ static void disableEdit(QTableWidgetItem *i)
 }
 
 /***********************************************************************
- * helper to make tool buttons for add/remove nodes
- **********************************************************************/
-static QToolButton *makeToolButton(QWidget *parent, const QString &theme)
-{
-    auto tb = new QToolButton(parent);
-    tb->setCursor(Qt::PointingHandCursor);
-    tb->setFocusPolicy(Qt::NoFocus);
-    tb->setIcon(makeIconFromTheme(theme));
-    tb->setStyleSheet("background: transparent; border: none;");
-    return tb;
-}
-
-/***********************************************************************
  * node table implementation
  **********************************************************************/
 HostSelectionTable::HostSelectionTable(QWidget *parent):

@@ -10,6 +10,8 @@
 
 class QAction;
 class QMenu;
+class QToolButton;
+class QWidget;
 
 //! global settings
 QSettings &getSettings(void);
@@ -22,3 +24,4 @@ QMap<QString, QObject *> &getObjectMap(void);
 //! icon utils
 QString makeIconPath(const QString &name);
 QIcon makeIconFromTheme(const QString &name);
+QToolButton *makeToolButton(QWidget *parent, const QString &theme);

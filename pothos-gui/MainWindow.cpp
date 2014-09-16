@@ -7,6 +7,7 @@
 #include "BlockTree/BlockCache.hpp"
 #include "BlockTree/BlockTreeDock.hpp"
 #include "PropertiesPanel/PropertiesPanelDock.hpp"
+#include "ConstantsPanel/ConstantsPanelDock.hpp"
 #include "GraphEditor/GraphEditorTabs.hpp"
 #include "GraphEditor/GraphActionsDock.hpp"
 #include "HostExplorer/HostExplorerDock.hpp"
@@ -60,6 +61,11 @@ PothosGuiMainWindow::PothosGuiMainWindow(QWidget *parent):
     getObjectMap()["affinityZonesDock"] = _affinityZonesDock;
     this->tabifyDockWidget(_hostExplorerDock, _affinityZonesDock);
 
+    //create constants panel dock
+    _constantsPanelDock = new ConstantsPanelDock(this);
+    getObjectMap()["constantsPanel"] = _constantsPanelDock;
+    this->tabifyDockWidget(_affinityZonesDock, _constantsPanelDock);
+
     //block cache (make before block tree)
     auto blockCache = new BlockCache(this);
     getObjectMap()["blockCache"] = blockCache;
@@ -74,7 +80,7 @@ PothosGuiMainWindow::PothosGuiMainWindow(QWidget *parent):
     _blockTreeDock = new BlockTreeDock(this);
     connect(getActionMap()["find"], SIGNAL(triggered(void)), _blockTreeDock, SLOT(activateFind(void)));
     getObjectMap()["blockTreeDock"] = _blockTreeDock;
-    this->tabifyDockWidget(_affinityZonesDock, _blockTreeDock);
+    this->tabifyDockWidget(_constantsPanelDock, _blockTreeDock);
 
     //create properties panel (make after block cache)
     _propertiesPanelDock = new PropertiesPanelDock(this);
@@ -387,6 +393,7 @@ void PothosGuiMainWindow::createMenus(void)
     _viewMenu->addAction(_messageWindowDock->toggleViewAction());
     _viewMenu->addAction(_graphActionsDock->toggleViewAction());
     _viewMenu->addAction(_blockTreeDock->toggleViewAction());
+    _viewMenu->addAction(_constantsPanelDock->toggleViewAction());
     _viewMenu->addAction(_affinityZonesDock->toggleViewAction());
     _viewMenu->addAction(_mainToolBar->toggleViewAction());
     _viewMenu->addAction(_fullScreenViewAction);

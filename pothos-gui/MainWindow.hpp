@@ -98,6 +98,7 @@ private:
     QDockWidget *_graphActionsDock;
     QDockWidget *_blockTreeDock;
     QDockWidget *_propertiesPanelDock;
+    QDockWidget *_constantsPanelDock;
     QDockWidget *_affinityZonesDock;
 
     //restoring from full screen
