@@ -43,7 +43,7 @@ public:
 
 private:
     size_t _minBuffSize;
-    std::vector <Pothos::BufferChunk> _buffs;
+    std::vector<Pothos::BufferChunk> _buffs;
 };
 
 /***********************************************************************
@@ -192,15 +192,18 @@ void Pothos::BufferAccumulator::require(const size_t numBytes)
     assert(not queue.empty());
 
     //dont do anything if the buffer is large enough
-    //or the accumulator itself doesnt have enough bytes
     if (queue.front().length >= numBytes) return;
-    if (_bytesAvailable < numBytes) return;
+
+    //or the accumulator itself doesnt have enough bytes -- but can eventually have enough
+    //we deuduce this by checking if the requirement is larger than the actual buffer size
+    if (_bytesAvailable < numBytes and numBytes <= queue.front().getBuffer().getLength()) return;
 
     //Actually this is ok: assert(not _impl->inPoolBuffer);
     //The smaller pool buffer in front will be absorbed and popped.
 
     //get a buffer that can hold the required bytes
     auto newBuffer = _impl->pool.get(numBytes);
+    newBuffer.dtype = queue.front().dtype;
     size_t newBuffBytes = newBuffer.length;
     newBuffer.length = 0;
 

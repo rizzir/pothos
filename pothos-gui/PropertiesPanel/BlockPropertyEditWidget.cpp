@@ -141,12 +141,34 @@ BlockPropertyEditWidget::BlockPropertyEditWidget(const Poco::JSON::Object::Ptr &
     {
         auto comboBox = new QComboBox(this);
         comboBox->setEditable(widgetKwargs->optValue<bool>("editable", false));
-        for (const auto &optionObj : *paramDesc->getArray("options"))
+        if (paramDesc->isArray("options")) for (const auto &optionObj : *paramDesc->getArray("options"))
         {
             const auto option = optionObj.extract<Poco::JSON::Object::Ptr>();
             comboBox->addItem(
                 QString::fromStdString(option->getValue<std::string>("name")),
                 QString::fromStdString(option->getValue<std::string>("value")));
+        }
+        connect(comboBox, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(handleEditWidgetChanged(const QString &)));
+        connect(comboBox, SIGNAL(editTextChanged(const QString &)), this, SLOT(handleEditWidgetChanged(const QString &)));
+        _edit = comboBox;
+    }
+    else if (widgetType == "DTypeChooser")
+    {
+        auto comboBox = new QComboBox(this);
+        for (int mode = 0; mode <= 1; mode++)
+        {
+            const std::string keyPrefix((mode == 0)? "c":"");
+            const QString namePrefix((mode == 0)? "Complex ":"");
+            const QString aliasPrefix((mode == 0)? "complex_":"");
+            for (int bytes = 64; bytes >= 32; bytes /= 2)
+            {
+                if (widgetKwargs->has(keyPrefix+"float")) comboBox->addItem(QString("%1Float%2").arg(namePrefix).arg(bytes), QString("\"%1float%2\"").arg(aliasPrefix).arg(bytes));
+            }
+            for (int bytes = 64; bytes >= 8; bytes /= 2)
+            {
+                if (widgetKwargs->has(keyPrefix+"int")) comboBox->addItem(QString("%1Int%2").arg(namePrefix).arg(bytes), QString("\"%1int%2\"").arg(aliasPrefix).arg(bytes));
+                if (widgetKwargs->has(keyPrefix+"uint")) comboBox->addItem(QString("%1UInt%2").arg(namePrefix).arg(bytes), QString("\"%1uint%2\"").arg(aliasPrefix).arg(bytes));
+            }
         }
         connect(comboBox, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(handleEditWidgetChanged(const QString &)));
         connect(comboBox, SIGNAL(editTextChanged(const QString &)), this, SLOT(handleEditWidgetChanged(const QString &)));

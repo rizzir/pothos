@@ -27,19 +27,8 @@ class QwtPlotZoomer;
  * |keywords frequency plot fft dft spectrum spectral
  *
  * |param dtype[Data Type] The data type of the input elements.
- * |option [Complex128] "complex128"
- * |option [Float64] "float64"
- * |option [Complex64] "complex64"
- * |option [Float32] "float32"
- * |option [Complex Int64] "complex_int64"
- * |option [Int64] "int64"
- * |option [Complex Int32] "complex_int32"
- * |option [Int32] "int32"
- * |option [Complex Int16] "complex_int16"
- * |option [Int16] "int16"
- * |option [Complex Int8] "complex_int8"
- * |option [Int8] "int8"
- * |default "float32"
+ * |widget DTypeChooser(float=1,cfloat=1,int=1,cint=1)
+ * |default "complex_float64"
  * |preview disable
  *
  * |param numInputs[Num Inputs] The number of input ports.
@@ -59,8 +48,18 @@ class QwtPlotZoomer;
  * |default 1e6
  * |units samples/sec
  *
+ * |param centerFreq[Center Freq] The center frequency of the plot.
+ * This value controls the labeling of the horizontal access.
+ * |default 0.0
+ * |units Hz
+ *
  * |param numBins[Num FFT Bins] The number of bins per fourier transform.
  * |default 1024
+ * |option 512
+ * |option 1024
+ * |option 2048
+ * |option 4096
+ * |widget ComboBox(editable=true)
  *
  * |param window[Window Type] The window function controls spectral leakage.
  * Enter "Kaiser(beta)" to use the parameterized Kaiser window.
@@ -115,6 +114,7 @@ class QwtPlotZoomer;
  * |setter setTitle(title)
  * |setter setDisplayRate(displayRate)
  * |setter setSampleRate(sampleRate)
+ * |setter setCenterFrequency(centerFreq)
  * |setter setNumFFTBins(numBins)
  * |setter setWindowType(window)
  * |setter setReferenceLevel(refLevel)
@@ -160,6 +160,11 @@ public:
      */
     void setSampleRate(const double sampleRate);
 
+    /*!
+     * center frequency of the plot
+     */
+    void setCenterFrequency(const double freq);
+
     void setNumFFTBins(const size_t numBins);
     void setWindowType(const std::string &windowType);
     void setReferenceLevel(const double refLevel);
@@ -181,6 +186,11 @@ public:
     double sampleRate(void) const
     {
         return _sampleRate;
+    }
+
+    double centerFrequency(void) const
+    {
+        return _centerFreq;
     }
 
     size_t numFFTBins(void) const
@@ -237,6 +247,8 @@ private:
     double _displayRate;
     double _sampleRate;
     double _sampleRateWoAxisUnits;
+    double _centerFreq;
+    double _centerFreqWoAxisUnits;
     size_t _numBins;
     double _refLevel;
     double _dynRange;

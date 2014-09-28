@@ -38,8 +38,9 @@ bool Pothos::WorkerActor::preWorkTasks(void)
             port._buffer = port._impl->bufferManager->front();
             port._impl->_bufferFromManager = true;
         }
+        port._buffer.dtype = port.dtype(); //always copy from port's dtype setting
         assert(not port._impl->_bufferFromManager or port._buffer == port._impl->bufferManager->front());
-        port._elements = port._buffer.length/port.dtype().size();
+        port._elements = port._buffer.elements();
         if (port._elements == 0 and not port.isSignal()) allOutputsReady = false;
         if (not port._impl->tokenManager or port._impl->tokenManager->empty()) allOutputsReady = false;
         port._pendingElements = 0;
@@ -104,7 +105,15 @@ void Pothos::WorkerActor::postWorkTasks(void)
         msgsConsumed += port._totalMessages;
 
         //pop the consumed bytes from the accumulator
-        if (bytes != 0) port._impl->bufferAccumulator.pop(bytes);
+        if (bytes != 0)
+        {
+            if (bytes > port._impl->bufferAccumulator.getTotalBytesAvailable())
+            {
+                poco_error_f4(Poco::Logger::get("Pothos.Block.consume"), "%s[%s] overconsumed %d bytes, %d available",
+                    block->getName(), port.name(), int(bytes), int(port._impl->bufferAccumulator.getTotalBytesAvailable()));
+            }
+            else port._impl->bufferAccumulator.pop(bytes);
+        }
 
         //move consumed elements into total
         port._totalElements += port._pendingElements;
@@ -152,15 +161,24 @@ void Pothos::WorkerActor::postWorkTasks(void)
     {
         auto &port = *entry.second;
         msgsProduced += port._totalMessages;
+        size_t elemsDequeued = 0;
         size_t bytesDequeued = 0;
 
         //set the buffer length, send it, pop from manager, clear reference
-        const size_t pendingBytes = port._pendingElements*port.dtype().size();
+        const size_t pendingBytes = port._pendingElements*port.buffer().dtype.size();
         if (pendingBytes != 0)
         {
             auto &buffer = port._buffer;
             buffer.length = pendingBytes;
-            if (port._impl->_bufferFromManager) port._impl->bufferManager->pop(buffer.length);
+            if (port._impl->_bufferFromManager)
+            {
+                if (buffer.length > buffer.getBuffer().getLength())
+                {
+                    poco_error_f4(Poco::Logger::get("Pothos.Block.produce"), "%s[%s] overproduced %d bytes, %d available",
+                        block->getName(), port.name(), int(buffer.length), int(buffer.getBuffer().getLength()));
+                }
+                else port._impl->bufferManager->pop(buffer.length);
+            }
             port.postBuffer(buffer);
             port._buffer = BufferChunk::null(); //clear reference
         }
@@ -175,6 +193,7 @@ void Pothos::WorkerActor::postWorkTasks(void)
             while (not port._impl->postedBuffers.empty())
             {
                 auto &buffer = port._impl->postedBuffers.front();
+                elemsDequeued += buffer.elements();
                 bytesDequeued += buffer.length;
                 message.buffers.push_back(buffer);
                 port._impl->postedBuffers.pop_front();
@@ -186,13 +205,14 @@ void Pothos::WorkerActor::postWorkTasks(void)
         while (not port._impl->postedBuffers.empty())
         {
             auto &buffer = port._impl->postedBuffers.front();
+            elemsDequeued += buffer.elements();
             bytesDequeued += buffer.length;
             this->sendOutputPortMessage(port._impl->subscribers, buffer);
             port._impl->postedBuffers.pop_front();
         }
 
         //add produced bytes into total
-        port._totalElements += bytesDequeued/port.dtype().size();
+        port._totalElements += elemsDequeued;
         bytesProduced += bytesDequeued;
     }
 

@@ -60,12 +60,30 @@ BlockPropertiesPanel::BlockPropertiesPanel(GraphBlock *block, QWidget *parent):
         connect(_idLineEdit, SIGNAL(returnPressed(void)), this, SLOT(handleCommit(void)));
     }
 
+    //create optional properties tabs
+    auto propertiesTabs = new QTabWidget(this);
+    _formLayout->addRow(propertiesTabs);
+    for (const auto &propKey : _block->getProperties())
+    {
+        const auto tabName = _block->getParamDesc(propKey)->optValue<std::string>("tab", "");
+        if (_paramLayouts.count(tabName) != 0) continue;
+        auto tab = new QWidget(propertiesTabs);
+        _paramLayouts[tabName] = new QFormLayout(tab);
+        propertiesTabs->addTab(tab, tabName.empty()? tr("Default") : QString::fromStdString(tabName));
+    }
+
+    //only one default tab? fall back to no tab widget
+    if (_paramLayouts.size() == 1 and _paramLayouts.count("") == 1)
+    {
+        _paramLayouts[""] = _formLayout;
+        delete propertiesTabs;
+    }
+
     //properties
     for (const auto &propKey : _block->getProperties())
     {
         _propIdToOriginal[propKey] = _block->getPropertyValue(propKey);
         auto paramDesc = _block->getParamDesc(propKey);
-        assert(paramDesc);
 
         //create editable widget
         auto editWidget = new BlockPropertyEditWidget(paramDesc, this);
@@ -82,7 +100,8 @@ BlockPropertiesPanel::BlockPropertiesPanel(GraphBlock *block, QWidget *parent):
         auto editLayout = new QVBoxLayout();
         editLayout->addWidget(editWidget);
         editLayout->addWidget(_propIdToErrorLabel[propKey]);
-        _formLayout->addRow(_propIdToFormLabel[propKey], editLayout);
+        auto layout = _paramLayouts.at(paramDesc->optValue<std::string>("tab", ""));
+        layout->addRow(_propIdToFormLabel[propKey], editLayout);
     }
 
     //affinity zone
@@ -125,13 +144,12 @@ BlockPropertiesPanel::BlockPropertiesPanel(GraphBlock *block, QWidget *parent):
     auto docTabs = new QTabWidget(this);
     connect(docTabs, SIGNAL(currentChanged(int)), this, SLOT(handleDocTabChanged(int)));
     _formLayout->addRow(docTabs);
-    if (blockDesc->isArray("docs"))
     {
         QString output;
         output += QString("<h1>%1</h1>").arg(QString::fromStdString(blockDesc->get("name").convert<std::string>()));
         output += QString("<p>%1</p>").arg(QString::fromStdString(block->getBlockDescPath()));
         output += "<p>";
-        for (const auto &lineObj : *blockDesc->getArray("docs"))
+        if (blockDesc->isArray("docs")) for (const auto &lineObj : *blockDesc->getArray("docs"))
         {
             const auto line = lineObj.extract<std::string>();
             if (line.empty()) output += "<p /><p>";

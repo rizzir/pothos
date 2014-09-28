@@ -41,6 +41,23 @@ void Pothos::WorkerActor::handleAsyncPortMessage(const PortMessage<InputPort *, 
     this->notify();
 }
 
+void Pothos::WorkerActor::handleInputBuffer(InputPort &input, const BufferChunk &buffer_)
+{
+    auto buffer = buffer_;
+    if (not buffer.dtype or not input.dtype() or //unspecified
+        (input.dtype().size() == buffer.dtype.size())) //size match
+    {
+        //unspecified buffer dtype? copy it from the port
+        if (not buffer.dtype) buffer.dtype = input.dtype();
+        input._impl->bufferAccumulator.push(buffer);
+    }
+    else
+    {
+        poco_error_f4(Poco::Logger::get("Pothos.Block.inputBuffer"), "%s[%s] dropped '%s', expected '%s'",
+            block->getName(), input.name(), buffer.dtype.toString(), input.dtype().toString());
+    }
+}
+
 void Pothos::WorkerActor::handleLabelsPortMessage(const PortMessage<InputPort *, LabeledBuffersMessage> &message, const Theron::Address)
 {
     assert(message.id != nullptr);
@@ -57,10 +74,7 @@ void Pothos::WorkerActor::handleLabelsPortMessage(const PortMessage<InputPort *,
     }
 
     //push all buffers into the accumulator
-    for (const auto &buffer : message.contents.buffers)
-    {
-        input._impl->bufferAccumulator.push(buffer);
-    }
+    for (const auto &buffer : message.contents.buffers) handleInputBuffer(input, buffer);
 
     this->notify();
 }
@@ -69,7 +83,7 @@ void Pothos::WorkerActor::handleBufferPortMessage(const PortMessage<InputPort *,
 {
     assert(message.id != nullptr);
     auto &input = *message.id;
-    input._impl->bufferAccumulator.push(message.contents);
+    handleInputBuffer(input, message.contents);
     this->notify();
 }
 

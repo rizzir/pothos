@@ -8,13 +8,11 @@ LoggerChannel::LoggerChannel(QObject *parent):
     QObject(parent),
     _logger(Poco::Logger::get("")),
     _oldLevel(_logger.getLevel()),
-    _oldChannel(_logger.getChannel()),
-    _splitter(new Poco::SplitterChannel())
+    _splitter(dynamic_cast<Poco::SplitterChannel *>(_logger.getChannel()))
 {
-    _logger.setLevel("trace"); //lowest level -> shows everything
-    _logger.setChannel(_splitter);
-    _splitter->addChannel(_oldChannel);
-    _splitter->addChannel(this);
+    _logger.setLevel(Poco::Message::PRIO_TRACE); //lowest level -> shows everything
+    if (_splitter) _splitter->addChannel(this);
+    else poco_error(Poco::Logger::get("PothosGui.LoggerChannel"), "expected SplitterChannel");
 }
 
 LoggerChannel::~LoggerChannel(void)
@@ -25,5 +23,5 @@ LoggerChannel::~LoggerChannel(void)
 void LoggerChannel::disconnect(void)
 {
     _logger.setLevel(_oldLevel);
-    _logger.setChannel(_oldChannel);
+    if (_splitter) _splitter->removeChannel(this);
 }

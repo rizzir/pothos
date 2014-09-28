@@ -13,6 +13,11 @@ struct Port
     Pothos::Proxy obj; //!< object reference
     std::string name; //!< name of the port
     std::string uid; //!< sort on this key
+    std::string toString(void) const
+    {
+        if (not obj) return "self["+name+"]";
+        return obj.call<std::string>("getName")+"["+name+"]";
+    }
 };
 
 inline bool operator==(const Port &lhs, const Port &rhs)
@@ -51,6 +56,10 @@ struct Flow
 {
     Port src;
     Port dst;
+    std::string toString(void) const
+    {
+        return src.toString()+"->"+dst.toString();
+    }
 };
 
 inline bool operator==(const Flow &lhs, const Flow &rhs)
@@ -70,7 +79,7 @@ namespace std
 
         value_type operator()(argument_type const& s) const
         {
-            return std::hash<Port>()(s.dst) ^
+            return std::hash<Port>()(s.src) ^
             (std::hash<Port>()(s.dst) << 1);
         }
     };

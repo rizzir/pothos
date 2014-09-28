@@ -96,6 +96,7 @@ private:
     PothosPacketSocketEndpoint _ep;
     std::thread handlerThread;
     bool running;
+    Pothos::DType _lastDtype;
 };
 
 void NetworkSink::work(void)
@@ -121,15 +122,26 @@ void NetworkSink::work(void)
     {
         const auto &label = *inputPort->labels().begin();
         std::ostringstream oss;
-        label.data.serialize(oss);
+        Pothos::Object(label).serialize(oss);
         auto index = label.index + inputPort->totalElements();
         _ep.send(PothosPacketTypeLabel, index, oss.str().data(), oss.str().length());
         inputPort->removeLabel(label);
     }
 
-    //send a buffer
+    //available buffer?
     const auto &buffer = inputPort->buffer();
-    if (buffer.length != 0)
+    if (buffer.length == 0) return;
+
+    //send the dtype when changed
+    if (not (_lastDtype == buffer.dtype))
+    {
+        std::ostringstream oss;
+        Pothos::Object(buffer.dtype).serialize(oss);
+        _ep.send(PothosPacketTypeDType, inputPort->totalMessages(), oss.str().data(), oss.str().length());
+        _lastDtype = buffer.dtype;
+    }
+
+    //send a buffer
     {
         _ep.send(PothosPacketTypeBuffer, inputPort->totalElements(), buffer.as<const void *>(), buffer.length);
         inputPort->consume(inputPort->elements());
